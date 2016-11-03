@@ -42,10 +42,6 @@ class MacSystemAuditor:
         Finding ID: V-67461
 
         :returns: bool -- True if criteria is met, False otherwise
-
-
-        TODO
-            Verify output is what is expected
         """
         holder_info = open(self.holder_filename, "w")
 
@@ -115,9 +111,6 @@ class MacSystemAuditor:
         Finding ID: V-67465 
 
         :returns: bool -- True if criteria is met, False otherwise
-        
-        TODO
-            Verify output is what is expected
         """
         holder_info = open(self.holder_filename, "w")
 
@@ -146,8 +139,6 @@ class MacSystemAuditor:
         Finding ID: V-67499
 
         :returns: bool -- True if criteria is met, False otherwise
-
-
         """ 
         holder_info = open(self.holder_filename, "w")
         call(["/usr/bin/sudo", "/usr/bin/defaults", "read", 
@@ -171,8 +162,6 @@ class MacSystemAuditor:
         Finding ID: V-67501
 
         :returns: bool -- True if criteria is met, False otherwise
-        TODO
-            Verify output is what is expected
         """ 
         holder_info = open(self.holder_filename, "w")
 
