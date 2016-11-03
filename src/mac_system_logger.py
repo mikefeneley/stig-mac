@@ -79,4 +79,39 @@ class MacSystemLogger:
             self.log.write("To fix: ")
             self.log.write("This setting is enforced using the Custom Policy configuration profile. \n\n\n")
 
+    def smb_file_sharing_disabled_errmsg(self, result):
+        if result == 0:
+            self.log.write("Check SV-82021r1_rule: ")
+            self.log.write("SMB File Sharing must be disabled unless required.\n\n")
+            self.log.write("To fix: ")
+            self.log.write("To disable the SMB File Sharing service, run the following command: /usr/bin/sudo /bin/launchctl disable system/com.apple.smbd\n\n\n")
+
+    def apple_file_sharing_disabled_errmsg(self, result):
+        if result == 0:
+            self.log.write("Check SV-82023r1_rule: ")
+            self.log.write("Apple File (AFP) Sharing must be disabled unless required.\n\n")
+            self.log.write("To fix: ")
+            self.log.write("To disable the Apple File (AFP) Sharing service, run the following command: /usr/bin/sudo /bin/launchctl disable system/com.apple.AppleFileServer\n\n\n")
+
+    def nfs_daemon_disabled_errmsg(self, result):
+        if result == 0:
+            self.log.write("Check SV-82025r1_rule: ")
+            self.log.write("The NFS daemon must be disabled unless required.\n\n")
+            self.log.write("To fix: ")
+            self.log.write("To check if the NFS daemon is disabled, use the following command: /usr/bin/sudo /bin/launchctl print-disabled system | /usr/bin/grep com.apple.nfsd\n\n\n")
+
+    def nfs_lock_daemon_disabled_errmsg(self, result):
+        if result == 0:
+            self.log.write("Check SV-82027r1_rule: ")
+            self.log.write("SThe NFS lock daemon must be disabled unless required.\n\n")
+            self.log.write("To fix: ")
+            self.log.write("To check if the NFS lock daemon is disabled, use the following command: /usr/bin/sudo /bin/launchctl print-disabled system | /usr/bin/grep com.apple.lockd\n\n\n")
+
+    def nfs_stat_daemon_disabled_errmsg(self, result):
+        if result == 0:
+            self.log.write("Check SV-82029r1_rule: ")
+            self.log.write("The NFS stat daemon must be disabled unless required.\n\n")
+            self.log.write("To fix: ")
+            self.log.write("To disable the NFS stat daemon, run the following command: /usr/bin/sudo /bin/launchctl disable system/com.apple.statd.notify\n\n\n")
+
 	

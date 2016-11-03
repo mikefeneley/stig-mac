@@ -27,7 +27,12 @@ class MacSystemAuditor:
         logger.blank_cd_action_disabled_errmsg(0)
         result = self.blank_dvd_action_disabled()
         logger.blank_dvd_action_disabled_errmsg(0)
-
+        result = self.music_cd_action_disabled()
+        logger.music_cd_action_disabled_errmsg(0)
+        result = self.picture_cd_action_disabled()
+        logger.picture_cd_action_disabled_errmsg(0)
+        result = self.video_dvd_action_disabled()
+        logger.video_dvd_action_disabled_errmsg(result)
     def session_lock_enabled(self):
         """
         Check SV-81951r1_rule: The operating system must conceal, via 
@@ -304,6 +309,132 @@ class MacSystemAuditor:
                 disabled = True
         holder_info.close()
         return disabled         
+
+    def smb_file_sharing_disabled(self):
+        """
+        Check SV-82021r1_rule: SMB File Sharing must be disabled unless required.
+
+        Finding ID: V-67531
+
+        :returns: bool -- True if criteria is met, False otherwise
+        """ 
+        holder_info = open(self.holder_filename, "w")
+        p1 = subprocess.Popen(["/usr/bin/sudo", "/bin/launchctl", 
+                "print-disabled", "system"], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["/usr/bin/grep", "com.apple.smbd"],
+                stdin=p1.stdout, stdout=subprocess.PIPE)
+        p1.stdout.close()
+        output,err = p2.communicate()
+        holder_info.write(output)
+        holder_info.close()
+
+        disabled = False
+        for line in holder_info:
+            if '"com.apple.smbd" => true' in line:
+                disabled = True
+        holder_info.close()
+        return disabled
+
+    def apple_file_sharing_disabled(self):
+        """
+        Check SV-82023r1_rule: Apple File (AFP) Sharing must be disabled.
+
+        Finding ID: V-67533
+
+        :returns: bool -- True if criteria is met, False otherwise
+        """ 
+        holder_info = open(self.holder_filename, "w")
+        p1 = subprocess.Popen(["/usr/bin/sudo", "/bin/launchctl", 
+                "print-disabled", "system"], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["/usr/bin/grep", "com.apple.AppleFileServer"],
+                stdin=p1.stdout, stdout=subprocess.PIPE)
+        p1.stdout.close()
+        output,err = p2.communicate()
+        holder_info.write(output)
+        holder_info.close()
+
+        disabled = False
+        for line in holder_info:
+            if '"com.apple.AppleFileServer" => true' in line:
+                disabled = True
+        holder_info.close()
+        return disabled
+
+    def nfs_daemon_disabled(self):
+        """
+        Check SV-82025r1_rule: The NFS daemon must be disabled unless required.
+
+        Finding ID: V-67535
+
+        :returns: bool -- True if criteria is met, False otherwise
+        """ 
+        holder_info = open(self.holder_filename, "w")
+        p1 = subprocess.Popen(["/usr/bin/sudo", "/bin/launchctl", 
+                "print-disabled", "system"], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["/usr/bin/grep", "com.apple.nfsd"],
+                stdin=p1.stdout, stdout=subprocess.PIPE)
+        p1.stdout.close()
+        output,err = p2.communicate()
+        holder_info.write(output)
+        holder_info.close()
+
+        disabled = False
+        for line in holder_info:
+            if '"com.apple.nfsd" => true' in line:
+                disabled = True
+        holder_info.close()
+        return disabled
+
+    def nfs_lock_daemon_disabled(self):
+        """
+        Check SV-82027r1_rule: The NFS lock daemon must be disabled unless required.
+
+        Finding ID: V-67537
+
+        :returns: bool -- True if criteria is met, False otherwise
+        """ 
+        holder_info = open(self.holder_filename, "w")
+        p1 = subprocess.Popen(["/usr/bin/sudo", "/bin/launchctl", 
+                "print-disabled", "system"], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["/usr/bin/grep", "com.apple.lockd"],
+                stdin=p1.stdout, stdout=subprocess.PIPE)
+        p1.stdout.close()
+        output,err = p2.communicate()
+        holder_info.write(output)
+        holder_info.close()
+
+        disabled = False
+        for line in holder_info:
+            if '"com.apple.lockd" => true' in line:
+                disabled = True
+        holder_info.close()
+        return disabled
+
+    def nfs_stat_daemon_disabled(self):
+        """
+        Check SV-82029r1_rule: The NFS stat daemon must be disabled unless required.
+
+        Finding ID: V-67539
+
+        :returns: bool -- True if criteria is met, False otherwise
+        """ 
+        holder_info = open(self.holder_filename, "w")
+        p1 = subprocess.Popen(["/usr/bin/sudo", "/bin/launchctl", 
+                "print-disabled", "system"], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["/usr/bin/grep", "com.apple.statd.notify"],
+                stdin=p1.stdout, stdout=subprocess.PIPE)
+        p1.stdout.close()
+        output,err = p2.communicate()
+        holder_info.write(output)
+        holder_info.close()
+
+        disabled = False
+        for line in holder_info:
+            if '"com.apple.statd.notify" => true' in line:
+                disabled = True
+        holder_info.close()
+        return disabled
+
 
 
     """

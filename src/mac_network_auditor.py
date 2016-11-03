@@ -8,11 +8,6 @@ class MacNetworkAuditor:
     Check the network system configuartion of the operating system
     to see if any aspect of the setup violates the requirements of the 
     DIA Mac 10.11 STIG.
-
-	TODO:
-		Pipe cannot be used in call funciton. Either parse entire output 
-		or set up pipes.
-
     """
     def __init__(self, holder_filename = "mac_holder.txt"):
         self.holder_filename = holder_filename
@@ -38,11 +33,7 @@ class MacNetworkAuditor:
         Finding ID: V-67491
 
         :returns: bool -- True if criteria is met, False otherwise
-
-        TODO
-        	Set up pipe correctly or line parsing.
         """
-
         holder_info = open(self.holder_filename, "w")
         p1 = subprocess.Popen(["/usr/bin/sudo", "/bin/launchctl", 
         		"print-disabled", "system"], stdout=subprocess.PIPE)
@@ -99,9 +90,6 @@ class MacNetworkAuditor:
         Finding ID: V-67495
 
         :returns: bool -- True if criteria is met, False otherwise
-
-        TODO
-        	Set up pipe correctly or line parsing.
         """
         holder_info = open(self.holder_filename, "w")
         p1 = subprocess.Popen(["/usr/sbin/system_profiler", 
@@ -112,7 +100,6 @@ class MacNetworkAuditor:
         output,err = p2.communicate()
         holder_info.write(output)
         holder_info.close()
-
 
         holder_info = open(self.holder_filename, "r")
         disabled = False
@@ -138,10 +125,6 @@ class MacNetworkAuditor:
         holder_info.close()
         holder_info = open(self.holder_filename, "r")
 
-
-
-
-
         disabled = False
         for line in holder_info:
             if "*Wi-Fi" in line:
@@ -149,6 +132,8 @@ class MacNetworkAuditor:
 
         holder_info.close()
         return disabled
+
+
 
 
 if __name__ == "__main__":
