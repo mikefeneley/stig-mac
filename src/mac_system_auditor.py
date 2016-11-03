@@ -1,6 +1,9 @@
 
 import subprocess
 from subprocess import call
+
+from mac_system_logger import MacSystemLogger
+
 class MacSystemAuditor:
     """
     Check the system configuartion of the operating system
@@ -11,13 +14,19 @@ class MacSystemAuditor:
         self.holder_filename = holder_filename
 
     def audit(self):
+        logger = MacSystemLogger()
         result = self.session_lock_enabled()
-
-#        result = self.session_lock_time_set()
-
-#        result = self.session_login_required()
-
-#        result = self.ir_support_disabled()
+        logger.session_lock_enabled_errmsg(0)
+        result = self.session_lock_time_set()
+        logger.session_lock_time_set_errmsg(0)
+        result = self.session_login_required()
+        logger.session_login_required_errmsg(0)
+        result = self.ir_support_disabled()
+        logger.ir_support_disabled_errmsg(0)
+        result = self.blank_cd_action_disabled()
+        logger.blank_cd_action_disabled_errmsg(0)
+        result = self.blank_dvd_action_disabled()
+        logger.blank_dvd_action_disabled_errmsg(0)
 
     def session_lock_enabled(self):
         """
@@ -31,7 +40,7 @@ class MacSystemAuditor:
 
 
         TODO
-            Set up pipe correctly or line parsing.
+            Verify output is what is expected
         """
         holder_info = open(self.holder_filename, "w")
 
@@ -40,11 +49,8 @@ class MacSystemAuditor:
         p2 = subprocess.Popen(["/usr/bin/grep", "moduleName"], 
             stdin=p1.stdout, stdout=subprocess.PIPE)
         p1.stdout.close()
-
         output,err = p2.communicate()
         holder_info.write(output)
-                #call(["/usr/sbin/system_profiler", "SPConfigurationProfileDataType" "|"
-        #		"/usr/bin/grep moduleName"], stdout=holder_info)
         holder_info.close()
 
         holder_info = open(self.holder_filename, "r")
@@ -65,24 +71,31 @@ class MacSystemAuditor:
         Finding ID: V-67463 CHECK TIME
 
         :returns: bool -- True if criteria is met, False otherwise
-
-
-        TODO
-            Set up pipe correctly or line parsing.
         """
         holder_info = open(self.holder_filename, "w")
 
-        call(["/usr/sbin/system_profiler", "SPConfigurationProfileDataType" "|"
-        			"/usr/bin/grep idleTime"], stdout=holder_info)
+        p1 = subprocess.Popen(["/usr/sbin/system_profiler", 
+            "SPConfigurationProfileDataType"], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["/usr/bin/grep", "idleTime"], 
+            stdin=p1.stdout, stdout=subprocess.PIPE)
+        p1.stdout.close()
+        output,err = p2.communicate()
+        holder_info.write(output)
         holder_info.close()
 
         holder_info = open(self.holder_filename, "r")
-
         time_set = False
         for line in holder_info:
-        	if "idleTime" in line:
-        		time_set = True
+            print(line)
+            if "idleTime" in line:
+                for s in line.split():
+                    s = s.strip(';')
+                    if(s.isdigit()):
+                        number = int(s)
+                        if(number <= 900):
+                            time_set = True
         holder_info.close()
+        print(time_set)
         return time_set
 
 
@@ -94,52 +107,204 @@ class MacSystemAuditor:
         session lock until the user reestablishes access using established 
         identification and authentication procedures.
 
-        Finding ID: V-67465 CHECK TIME
+        Finding ID: V-67465 
 
         :returns: bool -- True if criteria is met, False otherwise
-
-
+        
         TODO
-            Set up pipe correctly or line parsing.
-            Match parse string to expected
-        """    	
+            Verify output is what is expected
+        """
         holder_info = open(self.holder_filename, "w")
 
-        call(["/usr/bin/sudo", " /usr/bin/defaults" "read"
-        		"/Library/Preferences/com.apple.driver.AppleIRController", 
-                "DeviceEnabled"], stdout=holder_info)
+        p1 = subprocess.Popen(["/usr/sbin/system_profiler", 
+            "SPConfigurationProfileDataType"], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["/usr/bin/grep", "askForPassword"], 
+            stdin=p1.stdout, stdout=subprocess.PIPE)
+        p1.stdout.close()
+        output,err = p2.communicate()
+        holder_info.write(output)
         holder_info.close()
+
+        holder_info = open(self.holder_filename, "r")
 
         login_required = False
         for line in holder_info:
-            if "askForPassword 1":
+            if "askForPassword = 1;" in line:
                 login_required = True
         holder_info.close()
         return login_required
 
     def ir_support_disabled(self):
         """
-        Check RULE:
+        Check SV-81989r1_rule: Infrared [IR] support must be disabled.
 
-        Finding ID: ID
+        Finding ID: V-67499
 
         :returns: bool -- True if criteria is met, False otherwise
+
+
         """ 
         holder_info = open(self.holder_filename, "w")
-
-        call(["/usr/sbin/system_profiler", "SPConfigurationProfileDataType" "|"
-                    "/usr/bin/grep askForPassword"], stdout=holder_info)
+        call(["/usr/bin/sudo", "/usr/bin/defaults", "read", 
+            "/Library/Preferences/com.apple.driver.AppleIRController", 
+            "DeviceEnabled"], stdout=holder_info)
         holder_info.close()
 
 
         holder_info = open(self.holder_filename, "r")
         disabled = False
         for line in holder_info:
-            print(line)
             if "0" in line:
                 disabled = True
         holder_info.close()
         return disabled
+
+    def blank_cd_action_disabled(self):
+        """
+        Check SV-81991r1_rule: Automatic actions must be disabled for blank CDs.
+
+        Finding ID: V-67501
+
+        :returns: bool -- True if criteria is met, False otherwise
+        TODO
+            Verify output is what is expected
+        """ 
+        holder_info = open(self.holder_filename, "w")
+
+        p1 = subprocess.Popen(["/usr/sbin/system_profiler", 
+            "SPConfigurationProfileDataType"], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["/usr/bin/grep", "-A", "2", "'com.apple.digihub.blank.cd.appeared'"], 
+            stdin=p1.stdout, stdout=subprocess.PIPE)
+        p1.stdout.close()
+        output,err = p2.communicate()
+        holder_info.write(output)
+        holder_info.close()
+
+        holder_info = open(self.holder_filename, "r")       
+
+        disabled = False
+        for line in holder_info:
+            if "action = 1" in line:
+                disabled = True
+        holder_info.close()
+        return disabled
+
+    def blank_dvd_action_disabled(self):
+        """
+        Check SV-81993r1_rule: Automatic actions must be disabled for blank DVDs.
+
+        Finding ID: V-67503
+
+        :returns: bool -- True if criteria is met, False otherwise
+        """ 
+        holder_info = open(self.holder_filename, "w")
+
+        p1 = subprocess.Popen(["/usr/sbin/system_profiler", 
+            "SPConfigurationProfileDataType"], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["/usr/bin/grep", "-A", "2", 
+            "'com.apple.digihub.blank.dvd.appeared'"], stdin=p1.stdout,
+             stdout=subprocess.PIPE)
+        p1.stdout.close()
+        output,err = p2.communicate()
+        holder_info.write(output)
+        holder_info.close()
+
+        holder_info = open(self.holder_filename, "r")       
+
+        disabled = False
+        for line in holder_info:
+            if "action = 1" in line:
+                disabled = True
+        holder_info.close()
+        return disabled
+    
+    def music_cd_action_disabled(self):
+        """
+        Check SV-81995r1_rule: Automatic actions must be disabled for music CDs.
+
+        Finding ID: V-67505
+
+        :returns: bool -- True if criteria is met, False otherwise
+        """ 
+        holder_info = open(self.holder_filename, "w")
+
+        p1 = subprocess.Popen(["/usr/sbin/system_profiler", 
+            "SPConfigurationProfileDataType"], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["/usr/bin/grep", "-A", "2", 
+            "'com.apple.digihub.cd.music.appeared'"], stdin=p1.stdout,
+             stdout=subprocess.PIPE)
+        p1.stdout.close()
+        output,err = p2.communicate()
+        holder_info.write(output)
+        holder_info.close()
+
+        holder_info = open(self.holder_filename, "r")       
+
+        disabled = False
+        for line in holder_info:
+            if "action = 1" in line:
+                disabled = True
+        holder_info.close()
+        return disabled    
+    
+    def picture_cd_action_disabled(self):
+        """
+        Check SV-81997r1_rule: Automatic actions must be disabled for picture CDs.
+
+        Finding ID: V-67507
+
+        :returns: bool -- True if criteria is met, False otherwise
+        """ 
+        holder_info = open(self.holder_filename, "w")
+
+        p1 = subprocess.Popen(["/usr/sbin/system_profiler", 
+            "SPConfigurationProfileDataType"], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["/usr/bin/grep", "-A", "2", 
+            "'com.apple.digihub.cd.picture.appeared'"], stdin=p1.stdout,
+             stdout=subprocess.PIPE)
+        p1.stdout.close()
+        output,err = p2.communicate()
+        holder_info.write(output)
+        holder_info.close()
+
+        holder_info = open(self.holder_filename, "r")       
+
+        disabled = False
+        for line in holder_info:
+            if "action = 1" in line:
+                disabled = True
+        holder_info.close()
+        return disabled 
+
+    def video_dvd_action_disabled(self):
+        """
+        Check SV-81999r1_rule: Automatic actions must be disabled for video DVDs.
+
+        Finding ID: V-67509
+
+        :returns: bool -- True if criteria is met, False otherwise
+        """ 
+        holder_info = open(self.holder_filename, "w")
+
+        p1 = subprocess.Popen(["/usr/sbin/system_profiler", 
+            "SPConfigurationProfileDataType"], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["/usr/bin/grep", "-A", "2", 
+            "'com.apple.digihub.dvd.video.appeared'"], stdin=p1.stdout,
+             stdout=subprocess.PIPE)
+        p1.stdout.close()
+        output,err = p2.communicate()
+        holder_info.write(output)
+        holder_info.close()
+
+        holder_info = open(self.holder_filename, "r")       
+
+        disabled = False
+        for line in holder_info:
+            if "action = 1" in line:
+                disabled = True
+        holder_info.close()
+        return disabled         
+
 
     """
     Check RULE:

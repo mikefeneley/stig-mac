@@ -19,14 +19,14 @@ class MacNetworkAuditor:
 
     def audit(self):
         logger = MacNetworkLogger()
-   #     result = self.remote_shell_disabled()
-   #     logger.remote_shell_disabled_errmsg(result)
+        result = self.remote_shell_disabled()
+        logger.remote_shell_disabled_errmsg(result)
         result = self.screen_sharing_disabled()
         logger.screen_sharing_disabled_errmsg(result)
-  #      result = self.bluetooth_driver_disabled()
-   #     logger.bluetooth_driver_disabled_errmsg(result)
-    #    result = self.wifi_support_software_disabled()
-     #   logger.wifi_support_software_disabled_errmsg(result)
+        result = self.bluetooth_driver_disabled()
+        logger.bluetooth_driver_disabled_errmsg(result)
+        result = self.wifi_support_software_disabled()
+        logger.wifi_support_software_disabled_errmsg(result)
         filename = logger.get_filename()
         del logger
         return filename
@@ -42,12 +42,19 @@ class MacNetworkAuditor:
         TODO
         	Set up pipe correctly or line parsing.
         """
-        holder_info = open(self.holder_filename, "w")
-        call(["/usr/bin/sudo", "/bin/launchctl", "print-disabled", "system", "|"
-				"/usr/bin/grep", "com.apple.rshd"], stdout=holder_info)
-        holder_info.close()
-        holder_info = open(self.holder_filename, "r")
 
+        holder_info = open(self.holder_filename, "w")
+        p1 = subprocess.Popen(["/usr/bin/sudo", "/bin/launchctl", 
+        		"print-disabled", "system"], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["/usr/bin/grep", "com.apple.rshd"],
+        		stdin=p1.stdout, stdout=subprocess.PIPE)
+        p1.stdout.close()
+        output,err = p2.communicate()
+        holder_info.write(output)
+        holder_info.close()
+
+
+        holder_info = open(self.holder_filename, "r")
         disabled = False
         for line in holder_info:
             if '"com.apple.rshd" => true' in line:
@@ -67,7 +74,6 @@ class MacNetworkAuditor:
         :returns: bool -- True if criteria is met, False otherwise
         """
         holder_info = open(self.holder_filename, "w")
-        
         p1 = subprocess.Popen(["/usr/bin/sudo", "/bin/launchctl", 
         	"print-disabled", "system"], stdout=subprocess.PIPE)
         p2 = subprocess.Popen(["/usr/bin/grep", "com.apple.screensharing"]
@@ -75,6 +81,7 @@ class MacNetworkAuditor:
         p1.stdout.close()
         output,err = p2.communicate()
         holder_info.write(output)
+        holder_info.close()
 
 
         holder_info = open(self.holder_filename, 'r')
@@ -97,12 +104,17 @@ class MacNetworkAuditor:
         	Set up pipe correctly or line parsing.
         """
         holder_info = open(self.holder_filename, "w")
-        call(["/usr/sbin/system_profiler", "SPConfigurationProfileDataType",
-			"|", "system", "|", "/usr/bin/grep", "DisableBluetooth"],
-			stdout=holder_info)
+        p1 = subprocess.Popen(["/usr/sbin/system_profiler", 
+        	"SPConfigurationProfileDataType"], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["/usr/bin/grep", "DisableBluetooth"], 
+        	stdin=p1.stdout, stdout=subprocess.PIPE)
+        p1.stdout.close()
+        output,err = p2.communicate()
+        holder_info.write(output)
         holder_info.close()
-        holder_info = open(self.holder_filename, "r")
 
+
+        holder_info = open(self.holder_filename, "r")
         disabled = False
         for line in holder_info:
 		if "DisableBluetooth 1" in line:
