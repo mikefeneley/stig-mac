@@ -1,3 +1,4 @@
+import subprocess
 from subprocess import call
 
 from mac_network_logger import MacNetworkLogger
@@ -13,19 +14,19 @@ class MacNetworkAuditor:
 		or set up pipes.
 
     """
-    def __init__(self, holder_filename = "holder.txt"):
+    def __init__(self, holder_filename = "mac_holder.txt"):
         self.holder_filename = holder_filename
 
     def audit(self):
         logger = MacNetworkLogger()
-        result = self.remote_shell_disabled()
-        logger.remote_shell_disabled_errmsg(result)
+   #     result = self.remote_shell_disabled()
+   #     logger.remote_shell_disabled_errmsg(result)
         result = self.screen_sharing_disabled()
         logger.screen_sharing_disabled_errmsg(result)
-        result = self.bluetooth_driver_disabled()
-        logger.bluetooth_driver_disabled_errmsg(result)
-        result = self.wifi_support_software_disabled()
-        logger.wifi_support_software_disabled_errmsg(result)
+  #      result = self.bluetooth_driver_disabled()
+   #     logger.bluetooth_driver_disabled_errmsg(result)
+    #    result = self.wifi_support_software_disabled()
+     #   logger.wifi_support_software_disabled_errmsg(result)
         filename = logger.get_filename()
         del logger
         return filename
@@ -64,17 +65,19 @@ class MacNetworkAuditor:
         Finding ID: V-67493
 
         :returns: bool -- True if criteria is met, False otherwise
-
-        TODO
-        	Set up pipe correctly or line parsing.
         """
         holder_info = open(self.holder_filename, "w")
-        call(["/usr/bin/sudo", "/bin/launchctl", "print-disabled", "system", 
-			"|", "/usr/bin/grep", "com.apple.screensharing"], 
-			stdout=holder_info)
-        holder_info.close()
-        holder_info = open(self.holder_filename, "r")
+        
+        p1 = subprocess.Popen(["/usr/bin/sudo", "/bin/launchctl", 
+        	"print-disabled", "system"], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["/usr/bin/grep", "com.apple.screensharing"]
+        	, stdin=p1.stdout, stdout=subprocess.PIPE)
+        p1.stdout.close()
+        output,err = p2.communicate()
+        holder_info.write(output)
 
+
+        holder_info = open(self.holder_filename, 'r')
         disabled = False
         for line in holder_info:
 		if '"com.apple.screensharing" => true' in line:
@@ -116,10 +119,16 @@ class MacNetworkAuditor:
         :returns: bool -- True if criteria is met, False otherwise
         """	
         holder_info = open(self.holder_filename, "w")
+
+
         call(["/usr/bin/sudo", "/usr/sbin/networksetup",
 		"-listallnetworkservices"], stdout=holder_info)
         holder_info.close()
         holder_info = open(self.holder_filename, "r")
+
+
+
+
 
         disabled = False
         for line in holder_info:

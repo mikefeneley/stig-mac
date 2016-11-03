@@ -1,4 +1,5 @@
 
+from mac_system_auditor import MacSystemAuditor
 from mac_network_auditor import MacNetworkAuditor
 
 class MacAuditor:
@@ -10,15 +11,15 @@ class MacAuditor:
         Entry function for Mac audit. Calls functions that check
 		for rule violates of the Mac STIG and combines the outputs
 		into a single log file.
-
 		
 		:returns: string -- filename of the master log file
 		"""
         files = []
         network_auditor = MacNetworkAuditor()
-
+        system_auditor = MacSystemAuditor()
         log_filename = network_auditor.audit()
         files.append(log_filename)
+        log_filename = system_auditor.audit()
         master_log = self.build_output(files)
     
 
