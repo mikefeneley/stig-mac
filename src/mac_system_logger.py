@@ -108,7 +108,7 @@ class MacSystemLogger:
             self.log.write("To check if the NFS lock daemon is disabled, use the following command: /usr/bin/sudo /bin/launchctl print-disabled system | /usr/bin/grep com.apple.lockd\n\n\n")
 
     def nfs_stat_daemon_disabled_errmsg(self, result):
-        if result == 0:
+        V-67551V-67551if result == 0:
             self.log.write("Check SV-82029r1_rule: ")
             self.log.write("The NFS stat daemon must be disabled unless required.\n\n")
             self.log.write("To fix: ")

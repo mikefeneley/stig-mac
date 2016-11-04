@@ -424,7 +424,56 @@ class MacSystemAuditor:
         holder_info.close()
         return disabled
 
+##################### Not logged past this point
+    def session_startup_audits_enabeld(self):
+        """
+        Check SV-82041r1_rule: The operating system must initiate
+        session audits at system startup
 
+        Finding ID: V-67551
+
+        :returns: bool -- True if criteria is met, False otherwise
+        TODO:
+            Check if output is specific value
+        """      
+        holder_info = open(self.holder_filename, "w")
+        p1 = subprocess.Popen(["/usr/bin/sudo", "/bin/launchctl","list"],
+                stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["/usr/bin/grep", "com.apple.auditd"],
+                stdin=p1.stdout, stdout=subprocess.PIPE)
+        p1.stdout.close()
+        output,err = p2.communicate()
+        holder_info.write(output)
+        holder_info.close()
+
+        disabled = False
+        for line in holder_info:
+            disabled = True
+        holder_info.close()
+        return disabled
+
+    def min_disk_space_set(self):
+        """
+        Check SV-82005r1_rule:  The operating system must provide an immediate
+        warning to the SA and ISSO (at a minimum) when allocated audit 
+        record storage volume reaches 75% of repository maximum audit record
+        storage capacity.
+
+        Finding ID: V-67515
+
+        :returns: bool -- True if criteria is met, False otherwise
+        """ 
+        holder_info = open(self.holder_filename, "w")
+        call(p=["/usr/bin/sudo", "/usr/bin/grep" "^minfree",
+            "/etc/security/audit_control"], stdout=holder_info)
+        holder_info.close()
+
+        set = False
+        for line in holder_info:
+            if("minfree:25" in line):
+                disabled = True
+        holder_info.close()
+        return disabled
 
     """
     Check RULE:
